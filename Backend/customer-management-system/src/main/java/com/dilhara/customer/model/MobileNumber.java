@@ -18,7 +18,7 @@ public class MobileNumber {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 10)
     private String number;
 
     @ManyToOne(fetch = FetchType.LAZY)
