@@ -48,9 +48,10 @@ public class CustomerController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        // Create a PageRequest, sorting by newest first
+        // ADDED "id" TO THE SORT LIST TO BREAK TIES
         org.springframework.data.domain.PageRequest pageRequest =
-                org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
+                org.springframework.data.domain.PageRequest.of(page, size,
+                        org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "updatedAt", "id"));
 
         Page<CustomerDTO> customers = customerService.getAllCustomers(pageRequest);
         return new ResponseEntity<>(customers, HttpStatus.OK);

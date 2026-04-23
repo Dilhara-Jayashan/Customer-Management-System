@@ -33,25 +33,54 @@ const blankCustomer = () => ({
 
 /* ── Main Page ───────────────────────────────────── */
 export const CustomerList = () => {
-  const [customers, setCustomers]     = useState([]);
-  const [loading, setLoading]         = useState(false);
-  const [isStub, setIsStub]           = useState(false);
-  const [countries, setCountries]     = useState([]);
-  const [cities, setCities]           = useState([]);
-  const [search, setSearch]           = useState('');
-  const [modalMode, setModalMode]     = useState(null); // 'add'|'edit'|'view'|'delete'
-  const [selected, setSelected]       = useState(null);
+  const [customers, setCustomers]       = useState([]);
+  const [loading, setLoading]           = useState(false);
+  const [isStub, setIsStub]             = useState(false);
+  const [countries, setCountries]       = useState([]);
+  const [cities, setCities]             = useState([]);
+  const [search, setSearch]             = useState('');
+  const [modalMode, setModalMode]       = useState(null); // 'add'|'edit'|'view'|'delete'
+  const [selected, setSelected]         = useState(null);
+  
+  // Pagination States
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [page, setPage]                 = useState(0);
+  const [hasMore, setHasMore]           = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (pageNum = 0, isInitialLoad = false) => {
     setLoading(true);
     try {
-      const res = await customerService.getAllCustomers(0, 200);
-      setCustomers(res.content || []);
+      // Fetch 50 customers at a time
+      const res = await customerService.getAllCustomers(pageNum, 50); 
+      const incomingData = res.content || [];
+      
+      // If it's the first load, replace the array. If "Load More", append it.
+      if (isInitialLoad) {
+        setCustomers(incomingData);
+      } else {
+        setCustomers(prev => [...prev, ...incomingData]);
+      }
+      
+      setTotalRecords(res.totalElements || incomingData.length || 0); 
+      setHasMore(pageNum + 1 < (res.totalPages || 1));
       setIsStub(!!res._stub);
     } catch (e) {
       toast.error(e.message || 'Failed to load customers');
-    } finally { setLoading(false); }
+    } finally { 
+      setLoading(false); 
+    }
   }, []);
+
+  const handleRefresh = useCallback(() => {
+    setPage(0);
+    load(0, true);
+  }, [load]);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    load(nextPage, false);
+  };
 
   const loadMaster = useCallback(async () => {
     try {
@@ -65,7 +94,7 @@ export const CustomerList = () => {
   }, []);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: async data loaders called on mount
-  useEffect(() => { load(); loadMaster(); }, [load, loadMaster]);
+  useEffect(() => { handleRefresh(); loadMaster(); }, [handleRefresh, loadMaster]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return customers;
@@ -86,7 +115,8 @@ export const CustomerList = () => {
     try {
       await customerService.deleteCustomer(selected.id);
       toast.success('Customer deleted');
-      closeModal(); load();
+      closeModal(); 
+      handleRefresh(); // Refresh table from page 0
     } catch (e) { toast.error(e.message); }
   };
 
@@ -157,7 +187,7 @@ export const CustomerList = () => {
           <p className="page-subtitle">Create, view and manage all customer records</p>
         </div>
         <div className="page-header-actions">
-          <Button variant="secondary" onClick={load} disabled={loading} title="Refresh">
+          <Button variant="secondary" onClick={handleRefresh} disabled={loading} title="Refresh">
             <RefreshCw size={15} style={loading ? { animation: 'spin 1s linear infinite' } : {}} />
             Refresh
           </Button>
@@ -172,7 +202,7 @@ export const CustomerList = () => {
         <div className="stat-card">
           <div className="stat-icon indigo"><Users size={20} /></div>
           <div className="stat-info">
-            <div className="stat-value">{customers.length}</div>
+            <div className="stat-value">{totalRecords}</div>
             <div className="stat-label">Total Customers</div>
           </div>
         </div>
@@ -236,9 +266,22 @@ export const CustomerList = () => {
         <Table
           columns={cols}
           data={filtered}
-          isLoading={loading}
+          isLoading={loading && page === 0} // Only show full loader on page 0
           emptyMessage="No customers found. Click 'Add Customer' to get started."
         />
+        
+        {/* Load More Button */}
+        {hasMore && !search.trim() && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '20px', borderTop: '1px solid var(--border)' }}>
+            <Button 
+              variant="secondary" 
+              onClick={handleLoadMore} 
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : 'Load Next 50 Customers'}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Add / Edit Modal */}
@@ -249,7 +292,7 @@ export const CustomerList = () => {
         customers={customers}
         countries={countries}
         cities={cities}
-        onSuccess={() => { closeModal(); load(); }}
+        onSuccess={() => { closeModal(); handleRefresh(); }}
       />
 
       {/* View Modal */}

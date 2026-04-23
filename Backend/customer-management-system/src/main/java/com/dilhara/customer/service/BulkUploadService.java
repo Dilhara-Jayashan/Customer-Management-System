@@ -33,85 +33,78 @@ public class BulkUploadService {
     
     private final CustomerRepository customerRepository;
     private final MobileNumberRepository mobileNumberRepository;
-    
+
     @Transactional
     public BulkUploadResponseDTO uploadCustomersFromExcel(MultipartFile file) {
         BulkUploadResponseDTO response = new BulkUploadResponseDTO();
-        
+
         try {
-            // Validate file
             validateFile(file);
-            
             List<CustomerDTO> customers = parseExcelFile(file);
             response.setTotalRecords(customers.size());
-            
+
             int successCount = 0;
             int failureCount = 0;
-            
+
             List<Customer> batchToSave = new ArrayList<>();
+            List<CustomerDTO> batchDTOs = new ArrayList<>(); // Track DTOs perfectly in parallel
             Set<String> processedNICs = new HashSet<>();
-            
-            for (int i = 0; i < customers.size(); i++) {
+
+            for (CustomerDTO customerDTO : customers) {
                 try {
-                    CustomerDTO customerDTO = customers.get(i);
-                    
-                    // Validate required fields
                     validateCustomerDTO(customerDTO);
-                    
-                    // Check for duplicates
+
                     if (processedNICs.contains(customerDTO.getNicNumber())) {
                         throw new DuplicateNICException("Duplicate NIC in file: " + customerDTO.getNicNumber());
                     }
-                    
                     if (customerRepository.findByNicNumber(customerDTO.getNicNumber()).isPresent()) {
                         throw new DuplicateNICException("Customer with NIC " + customerDTO.getNicNumber() + " already exists");
                     }
-                    
-                    // Create customer object
+
                     Customer customer = new Customer();
                     customer.setName(customerDTO.getName());
                     customer.setDateOfBirth(customerDTO.getDateOfBirth());
                     customer.setNicNumber(customerDTO.getNicNumber());
-                    
+
                     batchToSave.add(customer);
+                    batchDTOs.add(customerDTO);
                     processedNICs.add(customerDTO.getNicNumber());
-                    successCount++;
-                    
-                    // Save in batches to optimize memory
+
+                    // Save in batches of 100
                     if (batchToSave.size() >= BATCH_SIZE) {
                         List<Customer> savedCustomers = customerRepository.saveAll(batchToSave);
-                        
-                        // Add mobile numbers if provided
                         for (int j = 0; j < savedCustomers.size(); j++) {
-                            if (customers.get(i - batchToSave.size() + j).getMobileNumbers() != null) {
-                                Customer saved = savedCustomers.get(j);
-                                CustomerDTO originalDTO = customers.get(i - batchToSave.size() + j);
-                                saveMobileNumbers(saved, originalDTO.getMobileNumbers());
+                            if (batchDTOs.get(j).getMobileNumbers() != null) {
+                                saveMobileNumbers(savedCustomers.get(j), batchDTOs.get(j).getMobileNumbers());
                             }
                         }
-                        
+                        successCount += batchToSave.size();
                         batchToSave.clear();
+                        batchDTOs.clear();
                     }
-                    
                 } catch (Exception e) {
                     failureCount++;
-                    // Continue processing remaining records
                 }
             }
-            
-            // Save remaining batch
+
+            // Save remaining leftover batch safely
             if (!batchToSave.isEmpty()) {
-                customerRepository.saveAll(batchToSave);
+                List<Customer> savedCustomers = customerRepository.saveAll(batchToSave);
+                for (int j = 0; j < savedCustomers.size(); j++) {
+                    if (batchDTOs.get(j).getMobileNumbers() != null) {
+                        saveMobileNumbers(savedCustomers.get(j), batchDTOs.get(j).getMobileNumbers());
+                    }
+                }
+                successCount += batchToSave.size();
             }
-            
+
             response.setSuccessCount(successCount);
             response.setFailureCount(failureCount);
             response.setMessage(String.format("Bulk upload completed. Success: %d, Failure: %d", successCount, failureCount));
-            
+
         } catch (Exception e) {
             throw new BulkUploadException("Error processing bulk upload: " + e.getMessage(), e);
         }
-        
         return response;
     }
     
