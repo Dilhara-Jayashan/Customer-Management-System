@@ -1,75 +1,85 @@
+/* ============================================================
+   Button Component
+   ============================================================ */
 .btn {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  transition: all var(--transition-base);
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  font-family: var(--font-sans);
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
 }
 
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background var(--transition-fast);
+}
+
+.btn:hover::before { background: rgba(255,255,255,0.06); }
+.btn:active::before { background: rgba(255,255,255,0.1); }
+
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Variants */
 .btn-primary {
-  background-color: var(--color-button-primary);
-  color: var(--color-text-inverse);
+  background: var(--gradient-brand);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
 }
-
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--color-button-primary-hover);
-  box-shadow: var(--shadow-md);
-}
+.btn-primary:hover { box-shadow: 0 6px 20px rgba(99,102,241,0.5); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
 
 .btn-secondary {
-  background-color: var(--color-button-secondary);
-  color: var(--color-text-inverse);
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  border-color: var(--border);
+  backdrop-filter: blur(10px);
 }
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: var(--color-button-secondary-hover);
-  box-shadow: var(--shadow-md);
-}
+.btn-secondary:hover { background: var(--bg-glass-hover); border-color: var(--border-strong); color: var(--text-primary); }
 
 .btn-danger {
-  background-color: var(--color-button-danger);
-  color: var(--color-text-inverse);
+  background: rgba(239,68,68,0.15);
+  color: #f87171;
+  border-color: rgba(239,68,68,0.25);
 }
-
-.btn-danger:hover:not(:disabled) {
-  background-color: var(--color-button-danger-hover);
-  box-shadow: var(--shadow-md);
-}
+.btn-danger:hover { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.45); color: #fca5a5; }
 
 .btn-success {
-  background-color: var(--color-button-success);
-  color: var(--color-text-inverse);
+  background: rgba(34,197,94,0.15);
+  color: #4ade80;
+  border-color: rgba(34,197,94,0.25);
 }
+.btn-success:hover { background: rgba(34,197,94,0.25); border-color: rgba(34,197,94,0.45); color: #86efac; }
 
-.btn-success:hover:not(:disabled) {
-  background-color: var(--color-button-success-hover);
-  box-shadow: var(--shadow-md);
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
 }
+.btn-ghost:hover { background: var(--bg-glass); color: var(--text-primary); }
 
 /* Sizes */
-.btn-sm {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-sm);
-}
-
-.btn-md {
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: var(--font-size-base);
-}
-
-.btn-lg {
-  padding: var(--spacing-md) var(--spacing-lg);
-  font-size: var(--font-size-lg);
-}
+.btn-sm { padding: 7px 14px; font-size: 13px; border-radius: var(--radius-sm); }
+.btn-lg { padding: 13px 28px; font-size: 15px; border-radius: var(--radius-lg); }
+.btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: var(--radius-md); }
+.btn-icon.btn-sm { width: 30px; height: 30px; padding: 6px; }

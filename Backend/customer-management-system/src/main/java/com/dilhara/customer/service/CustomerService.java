@@ -17,28 +17,28 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CustomerService {
-
+    
     private final CustomerRepository customerRepository;
     private final MobileNumberRepository mobileNumberRepository;
     private final AddressRepository addressRepository;
     private final FamilyMemberRepository familyMemberRepository;
     private final CityRepository cityRepository;
     private final CountryRepository countryRepository;
-
+    
     @Transactional
     public CustomerDTO createCustomer(CustomerDTO customerDTO) {
         // Check for duplicate NIC
         if (customerRepository.findByNicNumber(customerDTO.getNicNumber()).isPresent()) {
             throw new DuplicateNICException("A customer with NIC number " + customerDTO.getNicNumber() + " already exists");
         }
-
+        
         Customer customer = new Customer();
         customer.setName(customerDTO.getName());
         customer.setDateOfBirth(customerDTO.getDateOfBirth());
         customer.setNicNumber(customerDTO.getNicNumber());
 
         final Customer savedCustomer = customerRepository.save(customer);
-
+        
         // Add mobile numbers
         if (customerDTO.getMobileNumbers() != null && !customerDTO.getMobileNumbers().isEmpty()) {
             Set<MobileNumber> mobileNumbers = customerDTO.getMobileNumbers()
@@ -51,7 +51,7 @@ public class CustomerService {
             mobileNumberRepository.saveAll(mobileNumbers);
             savedCustomer.setMobileNumbers(mobileNumbers);
         }
-
+        
         // Add addresses
         if (customerDTO.getAddresses() != null && !customerDTO.getAddresses().isEmpty()) {
             Set<Address> addresses = customerDTO.getAddresses()
@@ -61,7 +61,7 @@ public class CustomerService {
                                 .orElseThrow(() -> new ResourceNotFoundException("City not found"));
                         Country country = countryRepository.findById(addressDTO.getCountryId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Country not found"));
-
+                        
                         return Address.builder()
                                 .addressLine1(addressDTO.getAddressLine1())
                                 .addressLine2(addressDTO.getAddressLine2())
@@ -74,7 +74,7 @@ public class CustomerService {
             addressRepository.saveAll(addresses);
             savedCustomer.setAddresses(addresses);
         }
-
+        
         // Add family members
         if (customerDTO.getFamilyMembers() != null && !customerDTO.getFamilyMembers().isEmpty()) {
             Set<FamilyMember> familyMembers = customerDTO.getFamilyMembers()
@@ -82,7 +82,7 @@ public class CustomerService {
                     .map(familyDTO -> {
                         Customer familyCustomer = customerRepository.findById(familyDTO.getFamilyCustomerId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Family member customer not found"));
-
+                        
                         return FamilyMember.builder()
                                 .customer(savedCustomer)
                                 .familyCustomer(familyCustomer)
@@ -93,7 +93,7 @@ public class CustomerService {
             familyMemberRepository.saveAll(familyMembers);
             savedCustomer.setFamilyMembers(familyMembers);
         }
-
+        
         return mapToDTO(savedCustomer);
     }
 
@@ -112,30 +112,23 @@ public class CustomerService {
         customer.setDateOfBirth(customerDTO.getDateOfBirth());
         customer.setNicNumber(customerDTO.getNicNumber());
 
-        // Update mobile numbers - Fix: Copy before clearing
-        Set<MobileNumber> oldMobileNumbers = new java.util.HashSet<>(customer.getMobileNumbers());
+        // 1. Update Mobile Numbers (Proper Orphan Removal)
         customer.getMobileNumbers().clear();
-        mobileNumberRepository.deleteAllInBatch(oldMobileNumbers);
-
         if (customerDTO.getMobileNumbers() != null && !customerDTO.getMobileNumbers().isEmpty()) {
-            Set<MobileNumber> mobileNumbers = customerDTO.getMobileNumbers()
+            Set<MobileNumber> newMobileNumbers = customerDTO.getMobileNumbers()
                     .stream()
                     .map(mobileDTO -> MobileNumber.builder()
                             .number(mobileDTO.getNumber())
-                            .customer(customer)
+                            .customer(customer) // Ensure bidirectional link
                             .build())
                     .collect(Collectors.toSet());
-            mobileNumberRepository.saveAll(mobileNumbers);
-            customer.setMobileNumbers(mobileNumbers);
+            customer.getMobileNumbers().addAll(newMobileNumbers);
         }
 
-        // Update addresses - Fix: Copy before clearing
-        Set<Address> oldAddresses = new java.util.HashSet<>(customer.getAddresses());
+        // 2. Update Addresses (Proper Orphan Removal)
         customer.getAddresses().clear();
-        addressRepository.deleteAllInBatch(oldAddresses);
-
         if (customerDTO.getAddresses() != null && !customerDTO.getAddresses().isEmpty()) {
-            Set<Address> addresses = customerDTO.getAddresses()
+            Set<Address> newAddresses = customerDTO.getAddresses()
                     .stream()
                     .map(addressDTO -> {
                         City city = cityRepository.findById(addressDTO.getCityId())
@@ -148,41 +141,37 @@ public class CustomerService {
                                 .addressLine2(addressDTO.getAddressLine2())
                                 .city(city)
                                 .country(country)
-                                .customer(customer)
+                                .customer(customer) // Ensure bidirectional link
                                 .build();
                     })
                     .collect(Collectors.toSet());
-            addressRepository.saveAll(addresses);
-            customer.setAddresses(addresses);
+            customer.getAddresses().addAll(newAddresses);
         }
 
-        // Update family members - Fix: Copy before clearing
-        Set<FamilyMember> oldFamilyMembers = new java.util.HashSet<>(customer.getFamilyMembers());
+        // 3. Update Family Members (Proper Orphan Removal)
         customer.getFamilyMembers().clear();
-        familyMemberRepository.deleteAllInBatch(oldFamilyMembers);
-
         if (customerDTO.getFamilyMembers() != null && !customerDTO.getFamilyMembers().isEmpty()) {
-            Set<FamilyMember> familyMembers = customerDTO.getFamilyMembers()
+            Set<FamilyMember> newFamilyMembers = customerDTO.getFamilyMembers()
                     .stream()
                     .map(familyDTO -> {
                         Customer familyCustomer = customerRepository.findById(familyDTO.getFamilyCustomerId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Family member customer not found"));
 
                         return FamilyMember.builder()
-                                .customer(customer)
                                 .familyCustomer(familyCustomer)
                                 .relationship(familyDTO.getRelationship())
+                                .customer(customer) // Ensure bidirectional link
                                 .build();
                     })
                     .collect(Collectors.toSet());
-            familyMemberRepository.saveAll(familyMembers);
-            customer.setFamilyMembers(familyMembers);
+            customer.getFamilyMembers().addAll(newFamilyMembers);
         }
 
-        Customer savedCustomer = customerRepository.save(customer);
-        return mapToDTO(savedCustomer);
+        // Hibernate automatically detects the changes in the collections and fires the correct DELETE/INSERT SQL
+        final Customer updatedCustomer = customerRepository.save(customer);
+        return mapToDTO(updatedCustomer);
     }
-
+    
     @Transactional(readOnly = true)
     public CustomerDTO getCustomerById(Long id) {
         Customer customer = customerRepository.findById(id)
@@ -193,17 +182,27 @@ public class CustomerService {
     @Transactional
     public void deleteCustomer(Long id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+
+        // Manually delete reverse foreign-key relationships first!
+        familyMemberRepository.deleteByFamilyCustomerId(id);
+
         customerRepository.delete(customer);
     }
 
+    @Transactional(readOnly = true)
+    public Page<CustomerDTO> getAllCustomers(Pageable pageable) {
+        return customerRepository.findAll(pageable)
+                .map(this::mapToDTO);
+    }
+    
     private CustomerDTO mapToDTO(Customer customer) {
         CustomerDTO dto = new CustomerDTO();
         dto.setId(customer.getId());
         dto.setName(customer.getName());
         dto.setDateOfBirth(customer.getDateOfBirth());
         dto.setNicNumber(customer.getNicNumber());
-
+        
         if (customer.getMobileNumbers() != null && !customer.getMobileNumbers().isEmpty()) {
             dto.setMobileNumbers(customer.getMobileNumbers()
                     .stream()
@@ -213,7 +212,7 @@ public class CustomerService {
                             .build())
                     .collect(Collectors.toSet()));
         }
-
+        
         if (customer.getAddresses() != null && !customer.getAddresses().isEmpty()) {
             dto.setAddresses(customer.getAddresses()
                     .stream()
@@ -228,7 +227,7 @@ public class CustomerService {
                             .build())
                     .collect(Collectors.toSet()));
         }
-
+        
         if (customer.getFamilyMembers() != null && !customer.getFamilyMembers().isEmpty()) {
             dto.setFamilyMembers(customer.getFamilyMembers()
                     .stream()
@@ -240,7 +239,7 @@ public class CustomerService {
                             .build())
                     .collect(Collectors.toSet()));
         }
-
+        
         return dto;
     }
 }

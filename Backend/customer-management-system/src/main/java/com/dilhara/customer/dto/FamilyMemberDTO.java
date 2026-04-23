@@ -12,13 +12,13 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 @Builder
 public class FamilyMemberDTO {
-
+    
     private Long id;
-
+    
     @NotNull(message = "Family member customer ID is required")
     private Long familyCustomerId;
-
+    
     private String familyCustomerName;
-
+    
     private String relationship;
 }

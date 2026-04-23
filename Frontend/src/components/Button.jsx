@@ -1,20 +1,24 @@
 import './Button.css';
 
-export const Button = ({ 
-  children, 
-  onClick, 
-  type = 'button', 
-  variant = 'primary', 
+export const Button = ({
+  children,
+  variant = 'primary',
   size = 'md',
+  type = 'button',
   disabled = false,
-  ...props 
+  onClick,
+  className = '',
+  icon = false,
+  ...props
 }) => {
+  const sizeClass = size === 'sm' ? 'btn-sm' : size === 'lg' ? 'btn-lg' : '';
+  const iconClass = icon ? 'btn-icon' : '';
   return (
-    <button 
-      className={`btn btn-${variant} btn-${size}`}
-      onClick={onClick}
+    <button
       type={type}
       disabled={disabled}
+      onClick={onClick}
+      className={`btn btn-${variant} ${sizeClass} ${iconClass} ${className}`.trim()}
       {...props}
     >
       {children}

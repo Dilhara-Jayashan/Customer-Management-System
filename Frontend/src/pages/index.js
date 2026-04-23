@@ -1,2 +1,2 @@
 export { CustomerList } from './CustomerList';
-export { BulkUpload } from './BulkUpload';
+export { BulkUpload }   from './BulkUpload';

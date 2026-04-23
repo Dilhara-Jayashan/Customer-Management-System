@@ -1,41 +1,49 @@
+import './Input.css';
 import './Select.css';
 
-export const Select = ({ 
-  label, 
-  id, 
-  options = [], 
-  value, 
-  onChange, 
-  error, 
+/**
+ * options: Array<{ id: number|string, name: string } | string>
+ */
+export const Select = ({
+  label,
+  id,
+  options = [],
+  value,
+  onChange,
+  error,
   required = false,
   disabled = false,
   placeholder = 'Select an option',
-  ...props 
-}) => {
-  return (
-    <div className="select-group">
-      {label && (
-        <label htmlFor={id} className="select-label">
-          {label}
-          {required && <span className="required">*</span>}
-        </label>
-      )}
+  name,
+}) => (
+  <div className="field">
+    {label && (
+      <label htmlFor={id} className="field-label">
+        {label}
+        {required && <span className="required">*</span>}
+      </label>
+    )}
+    <div className="select-wrapper">
       <select
         id={id}
+        name={name || id}
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className={`select ${error ? 'select-error' : ''}`}
-        {...props}
+        className={`field-input field-select${error ? ' has-error' : ''}`}
       >
         <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option key={option.id || option.value} value={option.id || option.value}>
-            {option.name || option.label}
-          </option>
-        ))}
+        {options.map((opt) => {
+          const optValue = typeof opt === 'object' ? opt.id : opt;
+          const optLabel = typeof opt === 'object' ? opt.name : opt;
+          return (
+            <option key={optValue} value={optValue}>
+              {optLabel}
+            </option>
+          );
+        })}
       </select>
-      {error && <span className="error-message">{error}</span>}
     </div>
-  );
-};
+    {error && <span className="field-error">⚠ {error}</span>}
+  </div>
+);

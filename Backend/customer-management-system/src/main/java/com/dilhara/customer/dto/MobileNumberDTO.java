@@ -13,10 +13,10 @@ import javax.validation.constraints.Size;
 @AllArgsConstructor
 @Builder
 public class MobileNumberDTO {
-
+    
     private Long id;
-
+    
     @NotBlank(message = "Mobile number is required")
-    @Size(min = 7, max = 10, message = "Mobile number must be between 7 and 10 characters")
+    @Size(min = 7, max = 20, message = "Mobile number must be between 7 and 20 characters")
     private String number;
 }
