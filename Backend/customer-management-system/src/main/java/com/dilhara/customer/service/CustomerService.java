@@ -8,7 +8,6 @@ import com.dilhara.customer.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -113,9 +112,10 @@ public class CustomerService {
         customer.setDateOfBirth(customerDTO.getDateOfBirth());
         customer.setNicNumber(customerDTO.getNicNumber());
 
-        // Update mobile numbers
+        // Update mobile numbers - Fix: Copy before clearing
+        Set<MobileNumber> oldMobileNumbers = new java.util.HashSet<>(customer.getMobileNumbers());
         customer.getMobileNumbers().clear();
-        mobileNumberRepository.deleteInBatch(customer.getMobileNumbers());
+        mobileNumberRepository.deleteAllInBatch(oldMobileNumbers);
 
         if (customerDTO.getMobileNumbers() != null && !customerDTO.getMobileNumbers().isEmpty()) {
             Set<MobileNumber> mobileNumbers = customerDTO.getMobileNumbers()
@@ -129,9 +129,10 @@ public class CustomerService {
             customer.setMobileNumbers(mobileNumbers);
         }
 
-        // Update addresses
+        // Update addresses - Fix: Copy before clearing
+        Set<Address> oldAddresses = new java.util.HashSet<>(customer.getAddresses());
         customer.getAddresses().clear();
-        addressRepository.deleteInBatch(customer.getAddresses());
+        addressRepository.deleteAllInBatch(oldAddresses);
 
         if (customerDTO.getAddresses() != null && !customerDTO.getAddresses().isEmpty()) {
             Set<Address> addresses = customerDTO.getAddresses()
@@ -155,9 +156,10 @@ public class CustomerService {
             customer.setAddresses(addresses);
         }
 
-        // Update family members
+        // Update family members - Fix: Copy before clearing
+        Set<FamilyMember> oldFamilyMembers = new java.util.HashSet<>(customer.getFamilyMembers());
         customer.getFamilyMembers().clear();
-        familyMemberRepository.deleteInBatch(customer.getFamilyMembers());
+        familyMemberRepository.deleteAllInBatch(oldFamilyMembers);
 
         if (customerDTO.getFamilyMembers() != null && !customerDTO.getFamilyMembers().isEmpty()) {
             Set<FamilyMember> familyMembers = customerDTO.getFamilyMembers()
@@ -177,14 +179,14 @@ public class CustomerService {
             customer.setFamilyMembers(familyMembers);
         }
 
-        customer = customerRepository.save(customer);
-        return mapToDTO(customer);
+        Customer savedCustomer = customerRepository.save(customer);
+        return mapToDTO(savedCustomer);
     }
 
     @Transactional(readOnly = true)
     public CustomerDTO getCustomerById(Long id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(HttpStatus.NOT_FOUND,"Customer not found with id " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id " + id));
         return mapToDTO(customer);
     }
 

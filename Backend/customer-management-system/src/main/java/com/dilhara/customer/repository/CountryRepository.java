@@ -1,6 +1,7 @@
 package com.dilhara.customer.repository;
 
 import com.dilhara.customer.model.Country;
+import com.dilhara.customer.model.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

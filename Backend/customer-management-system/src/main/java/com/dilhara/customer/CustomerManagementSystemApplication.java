@@ -9,10 +9,6 @@ public class CustomerManagementSystemApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(CustomerManagementSystemApplication.class, args);
-
-        Customer cu = new Customer();
-        cu.setName("j");
-        System.out.println(cu.getName());
     }
 
 }
