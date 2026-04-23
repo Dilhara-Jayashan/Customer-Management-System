@@ -153,7 +153,8 @@
   position: relative;
   z-index: 1;
   padding: 0;
-  overflow-y: auto;
+  /* NOTE: Do NOT add overflow-y here — it creates a stacking context
+     that traps fixed/absolute modals behind the navbar and footer. */
 }
 
 /* ── Footer ──────────────────────────────────────────────── */

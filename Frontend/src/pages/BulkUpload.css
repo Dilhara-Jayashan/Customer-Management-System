@@ -1,10 +1,10 @@
 /* ============================================================
-   Bulk Upload Page
+   Bulk Upload Page — Premium Dark Theme
    ============================================================ */
-.bulk-page { 
-  max-width: 1000px; 
-  margin: 0 auto; 
-  padding: 40px 32px 60px; 
+.bulk-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 32px 60px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -48,7 +48,7 @@
   margin: 0;
 }
 
-/* Drop zone */
+/* ── Drop Zone ────────────────────────────────────────────── */
 .drop-zone {
   border: 2px dashed var(--border-strong);
   border-radius: var(--radius-xl);
@@ -58,8 +58,12 @@
   transition: all var(--transition-base);
   background: var(--bg-glass);
   position: relative;
-  overflow: visible;
-  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
 }
 
 .drop-zone::before {
@@ -69,90 +73,113 @@
   background: var(--gradient-glow);
   opacity: 0;
   transition: opacity var(--transition-base);
-  z-index: -1;
   pointer-events: none;
 }
 
-.drop-zone:hover, 
+.drop-zone:hover,
 .drop-zone.drag-over {
   border-color: var(--indigo-500);
-  background: rgba(99,102,241,0.05);
+  background: rgba(99, 102, 241, 0.05);
 }
 
-.drop-zone:hover::before, 
-.drop-zone.drag-over::before { 
-  opacity: 1; 
+.drop-zone:hover::before,
+.drop-zone.drag-over::before {
+  opacity: 1;
 }
 
 .drop-zone-icon {
-  width: 64px; 
+  width: 64px;
   height: 64px;
   border-radius: var(--radius-xl);
-  background: rgba(99,102,241,0.15);
-  border: 1px solid rgba(99,102,241,0.25);
-  display: flex; 
-  align-items: center; 
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  display: flex;
+  align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
   color: var(--indigo-400);
   transition: all var(--transition-base);
-  position: relative;
-  z-index: 2;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .drop-zone:hover .drop-zone-icon {
-  background: rgba(99,102,241,0.25);
+  background: rgba(99, 102, 241, 0.25);
   box-shadow: var(--shadow-glow);
   transform: scale(1.05);
 }
 
-.drop-zone-title { 
-  font-size: 18px; 
-  font-weight: 700; 
-  color: var(--text-primary); 
-  margin-bottom: 8px;
-  position: relative;
-  z-index: 2;
+.drop-zone-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
 }
 
-.drop-zone-subtitle { 
-  font-size: 14px; 
-  color: var(--text-tertiary); 
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 2;
+.drop-zone-subtitle {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  margin: 0 0 12px;
 }
 
-.drop-zone input[type="file"] { 
-  display: none; 
-}
-
-.drop-zone > * {
-  position: relative;
-  z-index: 2;
-}
-
+/* File info card shown when a file is selected */
 .file-info-card {
-  display: flex; align-items: center; gap: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
   padding: 14px 18px;
-  background: rgba(99,102,241,0.08);
-  border: 1px solid rgba(99,102,241,0.2);
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
   border-radius: var(--radius-lg);
-  margin-top: 20px;
+  margin-top: 16px;
   text-align: left;
+  width: 100%;
+  max-width: 460px;
+  cursor: default;
 }
-.file-info-icon {
-  width: 40px; height: 40px;
-  border-radius: var(--radius-md);
-  background: rgba(99,102,241,0.15);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--indigo-400); flex-shrink: 0;
-}
-.file-info-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-.file-info-size { font-size: 12px; color: var(--text-tertiary); }
-.file-info-remove { margin-left: auto; }
 
-/* Template */
+.file-info-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: rgba(99, 102, 241, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--indigo-400);
+  flex-shrink: 0;
+}
+
+.file-info-name { font-size: 14px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-info-size { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+.file-info-remove { margin-left: auto; flex-shrink: 0; }
+
+/* ── Upload Actions ───────────────────────────────────────── */
+.upload-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+/* ── Progress ─────────────────────────────────────────────── */
+.progress-wrap { margin: 20px 0; }
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-overlay);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--gradient-brand);
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+.progress-label { font-size: 12px; color: var(--text-tertiary); margin-top: 6px; text-align: right; }
+
+/* ── Template Card ────────────────────────────────────────── */
 .template-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -160,7 +187,15 @@
   padding: 24px;
   margin-top: 24px;
 }
-.template-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.template-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .template-desc  { font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px; }
 .template-code  {
   background: var(--bg-base);
@@ -176,25 +211,7 @@
   line-height: 1.6;
 }
 
-/* Progress */
-.progress-wrap { margin: 20px 0; }
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: var(--bg-overlay);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background: var(--gradient-brand);
-  border-radius: var(--radius-full);
-  transition: width 0.4s ease;
-  box-shadow: 0 0 10px rgba(99,102,241,0.5);
-}
-.progress-label { font-size: 12px; color: var(--text-tertiary); margin-top: 6px; text-align: right; }
-
-/* Result */
+/* ── Result Modal ─────────────────────────────────────────── */
 .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
 .result-stat {
   text-align: center;
@@ -203,9 +220,9 @@
   border: 1px solid var(--border);
   background: var(--bg-glass);
 }
-.result-stat.total   { border-color: rgba(99,102,241,0.3); }
-.result-stat.success { border-color: rgba(34,197,94,0.3); }
-.result-stat.failed  { border-color: rgba(239,68,68,0.3); }
+.result-stat.total   { border-color: rgba(99, 102, 241, 0.3); }
+.result-stat.success { border-color: rgba(34, 197, 94, 0.3); }
+.result-stat.failed  { border-color: rgba(239, 68, 68, 0.3); }
 .result-stat-value {
   font-size: 32px; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 4px;
 }
@@ -223,76 +240,21 @@
   margin-bottom: 20px;
 }
 
-.upload-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
-
-/* Preview table section */
-.preview-section {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  margin-top: 24px;
-}
-.preview-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-}
-.preview-title { font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
-
+/* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .bulk-page { 
-    padding: 24px 16px 40px;
-  }
-  
-  .page-header {
-    flex-direction: column;
-  }
-  
-  .page-title {
-    font-size: 24px;
-  }
-  
-  .result-grid { 
-    grid-template-columns: 1fr; 
-  }
-  
-  .drop-zone {
-    padding: 32px 20px;
-  }
-  
-  .upload-actions {
-    flex-direction: column-reverse;
-  }
-  
-  .upload-actions button {
-    width: 100%;
-  }
+  .bulk-page { padding: 24px 16px 40px; }
+  .page-title { font-size: 24px; }
+  .result-grid { grid-template-columns: 1fr; }
+  .drop-zone { padding: 36px 20px; }
+  .upload-actions { flex-direction: column-reverse; }
+  .upload-actions button { width: 100%; }
 }
 
-@media (max-width: 640px) {
-  .bulk-page { 
-    padding: 16px 12px 32px; 
-  }
-  
-  .page-title {
-    font-size: 20px;
-  }
-  
-  .result-grid { 
-    grid-template-columns: 1fr; 
-  }
-  
-  .drop-zone {
-    padding: 24px 16px;
-  }
-  
-  .drop-zone-icon {
-    width: 48px;
-    height: 48px;
-  }
-  
-  .drop-zone-title {
-    font-size: 16px;
-  }
+@media (max-width: 480px) {
+  .bulk-page { padding: 16px 12px 32px; }
+  .page-title { font-size: 20px; }
+  .drop-zone { padding: 28px 16px; }
+  .drop-zone-icon { width: 52px; height: 52px; }
+  .drop-zone-title { font-size: 16px; }
+  .file-info-card { max-width: 100%; }
 }

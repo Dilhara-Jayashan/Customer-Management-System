@@ -1,13 +1,12 @@
 import { useState, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Upload, Download, FileSpreadsheet, X, CheckCircle2, AlertCircle, Info, Eye } from 'lucide-react';
-import { Button, Alert, Modal, Table, Badge } from '../components';
+import { Upload, Download, FileSpreadsheet, X, CheckCircle2, Info } from 'lucide-react';
+import { Button, Alert, Modal, Badge } from '../components';
 import { customerService } from '../services/customerService';
 import './BulkUpload.css';
 
-/* Download a sample .xlsx template using a data-URI approach (no extra deps) */
+/* Download a sample CSV template */
 const downloadTemplate = () => {
-  /* Build a minimal CSV that opens well in Excel and shows expected columns */
   const csv = [
     'Name,Date of Birth,NIC Number,Mobile Number',
     'John Silva,1990-01-15,901234567V,0771234567',
@@ -48,13 +47,18 @@ export const BulkUpload = () => {
     setResult(null);
   }, []);
 
-  const handleInput  = (e) => selectFile(e.target.files[0]);
-  const handleDrop   = (e) => {
+  const handleInput    = (e) => selectFile(e.target.files[0]);
+  const handleDrop     = (e) => {
     e.preventDefault(); setDragOver(false);
     selectFile(e.dataTransfer.files[0]);
   };
   const handleDragOver  = (e) => { e.preventDefault(); setDragOver(true); };
   const handleDragLeave = ()  => setDragOver(false);
+
+  const openFilePicker = (e) => {
+    e.stopPropagation();
+    fileRef.current?.click();
+  };
 
   const handleUpload = async () => {
     if (!file) { toast.error('Please select a file first'); return; }
@@ -77,13 +81,6 @@ export const BulkUpload = () => {
     }
   };
 
-  const previewCols = [
-    { key: 'Name',          label: 'Name' },
-    { key: 'Date of Birth', label: 'Date of Birth' },
-    { key: 'NIC Number',    label: 'NIC Number' },
-    { key: 'Mobile Number', label: 'Mobile' },
-  ];
-
   return (
     <div className="bulk-page">
       {/* Header */}
@@ -103,48 +100,64 @@ export const BulkUpload = () => {
       />
       <div style={{ height: 20 }} />
 
-      {/* Drop zone */}
-      <label
-        htmlFor="file-upload"
+      {/* Drop zone — using div, not label, so inner buttons work correctly */}
+      <div
         className={`drop-zone${dragOver ? ' drag-over' : ''}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
+        onClick={openFilePicker}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && openFilePicker(e)}
+        aria-label="Click or drag to upload Excel file"
       >
-        <div className="drop-zone-icon">
-          <FileSpreadsheet size={28} />
-        </div>
-        <div className="drop-zone-title">Drop your Excel file here</div>
-        <div className="drop-zone-subtitle">or click to browse — .xlsx / .xls accepted</div>
-        <Button variant="primary" type="button" onClick={() => fileRef.current?.click()}>
-          <Upload size={15} /> Choose File
-        </Button>
+        {/* Hidden file input */}
         <input
           ref={fileRef}
           id="file-upload"
           type="file"
           accept=".xlsx,.xls"
           onChange={handleInput}
+          style={{ display: 'none' }}
         />
 
+        <div className="drop-zone-icon">
+          <FileSpreadsheet size={28} />
+        </div>
+        <div className="drop-zone-title">Drop your Excel file here</div>
+        <div className="drop-zone-subtitle">or click to browse — .xlsx / .xls accepted</div>
+
+        <Button
+          variant="primary"
+          type="button"
+          onClick={openFilePicker}
+        >
+          <Upload size={15} /> Choose File
+        </Button>
+
         {file && (
-          <div className="file-info-card" onClick={e => e.preventDefault()}>
+          <div className="file-info-card" onClick={(e) => e.stopPropagation()}>
             <div className="file-info-icon"><FileSpreadsheet size={20} /></div>
-            <div>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div className="file-info-name">{file.name}</div>
               <div className="file-info-size">{fmtSize(file.size)}</div>
             </div>
             <div className="file-info-remove">
               <Button
                 type="button" variant="ghost" size="sm" icon
-                onClick={() => { setFile(null); if (fileRef.current) fileRef.current.value = ''; }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFile(null);
+                  if (fileRef.current) fileRef.current.value = '';
+                }}
               >
                 <X size={14} />
               </Button>
             </div>
           </div>
         )}
-      </label>
+      </div>
 
       {/* Progress */}
       {uploading && (
@@ -156,11 +169,12 @@ export const BulkUpload = () => {
 
       {/* Upload action */}
       <div className="upload-actions">
-        <Button variant="secondary" onClick={downloadTemplate}>
+        <Button variant="secondary" type="button" onClick={downloadTemplate}>
           <Download size={15} /> Download Template
         </Button>
         <Button
           variant="primary"
+          type="button"
           id="btn-upload-customers"
           onClick={handleUpload}
           disabled={!file || uploading}
