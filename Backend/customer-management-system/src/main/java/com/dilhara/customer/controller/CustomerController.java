@@ -12,11 +12,12 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/api/customers")
 @RequiredArgsConstructor
+@CrossOrigin
 public class CustomerController {
 
     private final CustomerService customerService;
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<CustomerDTO> createCustomer(@Valid @RequestBody CustomerDTO customerDTO) {
         CustomerDTO created = customerService.createCustomer(customerDTO);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
