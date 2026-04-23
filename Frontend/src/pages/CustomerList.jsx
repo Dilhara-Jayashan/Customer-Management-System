@@ -38,6 +38,7 @@ export const CustomerList = () => {
     try {
       await fetchCustomers();
     } catch (error) {
+      console.error('Error loading customers:', error);
       showAlert('error', formatErrorMessage(error));
     }
   };
@@ -183,13 +184,16 @@ const AddEditCustomerModal = ({ isOpen, onClose, customer, onSuccess, onError, c
     }
 
     try {
-      // Mobile numbers are optional, but if provided must be valid
+      // Mobile numbers are optional, but if provided must be valid (7-10 characters)
       const validMobileNumbers = values.mobileNumbers
         .filter(m => m.number && m.number.trim().length > 0);
 
+      let hasMobileErrors = false;
       validMobileNumbers.forEach((mobile, index) => {
-        if (!validatePhone(mobile.number)) {
-          form.setFieldError(`mobileNumbers[${index}]`, 'Invalid mobile number format');
+        const phoneNum = mobile.number.trim();
+        if (phoneNum.length < 7 || phoneNum.length > 10) {
+          form.setFieldError(`mobileNumbers[${index}]`, 'Mobile number must be between 7 and 10 characters');
+          hasMobileErrors = true;
         }
       });
 
@@ -197,17 +201,25 @@ const AddEditCustomerModal = ({ isOpen, onClose, customer, onSuccess, onError, c
       const validAddresses = values.addresses
         .filter(a => a.addressLine1 && a.addressLine1.trim().length > 0);
 
+      let hasAddressErrors = false;
       validAddresses.forEach((address, index) => {
         if (!address.addressLine1 || address.addressLine1.trim().length === 0) {
           form.setFieldError(`addresses[${index}].addressLine1`, 'Address Line 1 is required');
+          hasAddressErrors = true;
         }
-        if (!address.cityId) {
+        if (!address.cityId || address.cityId === '') {
           form.setFieldError(`addresses[${index}].cityId`, 'City is required');
+          hasAddressErrors = true;
         }
-        if (!address.countryId) {
+        if (!address.countryId || address.countryId === '') {
           form.setFieldError(`addresses[${index}].countryId`, 'Country is required');
+          hasAddressErrors = true;
         }
       });
+
+      if (hasMobileErrors || hasAddressErrors) {
+        return;
+      }
 
       const payload = {
         name: values.name,
@@ -228,8 +240,10 @@ const AddEditCustomerModal = ({ isOpen, onClose, customer, onSuccess, onError, c
 
       if (customer) {
         await customerService.updateCustomer(customer.id, payload);
+        window.alert('✅ Customer updated successfully!');
       } else {
         await customerService.createCustomer(payload);
+        window.alert('✅ Customer profile created successfully!');
       }
       onSuccess();
       form.resetForm();

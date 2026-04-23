@@ -15,7 +15,13 @@ export const customerService = {
 
   // Get all customers
   getAllCustomers: () => {
-    return api.get(CUSTOMERS_ENDPOINT).then(res => res.data);
+    return api.get(`${CUSTOMERS_ENDPOINT}?page=0&size=100`).then(res => {
+      // Handle paginated response
+      if (res.data && res.data.content) {
+        return res.data.content; // Extract content from Page object
+      }
+      return res.data;
+    });
   },
 
   // Update customer

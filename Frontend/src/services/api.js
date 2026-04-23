@@ -22,6 +22,9 @@ api.interceptors.response.use(
     if (error.response?.status === 400) {
       return Promise.reject(new Error(error.response?.data?.message || 'Invalid request'));
     }
+    if (!error.response) {
+      return Promise.reject(new Error('Cannot connect to server. Please ensure the backend is running on http://localhost:8080'));
+    }
     return Promise.reject(error);
   }
 );
