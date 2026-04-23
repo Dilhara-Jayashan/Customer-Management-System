@@ -1,9 +1,6 @@
 package com.dilhara.customer.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 
@@ -11,7 +8,8 @@ import javax.persistence.*;
 @Table(name = "family_members", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"customer_id", "family_customer_id"})
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

@@ -21,16 +21,16 @@ public class MasterDataService {
     private final CountryRepository countryRepository;
     private final CityRepository cityRepository;
     
-    @Transactional
-    public CountryDTO createCountry(CountryDTO countryDTO) {
-        Country country = Country.builder()
-                .name(countryDTO.getName())
-                .code(countryDTO.getCode())
-                .build();
-        
-        country = countryRepository.save(country);
-        return mapCountryToDTO(country);
-    }
+//    @Transactional
+//    public CountryDTO createCountry(CountryDTO countryDTO) {
+//        Country country = Country.builder()
+//                .name(countryDTO.getName())
+//                .code(countryDTO.getCode())
+//                .build();
+//
+//        country = countryRepository.save(country);
+//        return mapCountryToDTO(country);
+//    }
     
     @Transactional(readOnly = true)
     public List<CountryDTO> getAllCountries() {
@@ -47,19 +47,19 @@ public class MasterDataService {
         return mapCountryToDTO(country);
     }
     
-    @Transactional
-    public CityDTO createCity(CityDTO cityDTO) {
-        Country country = countryRepository.findById(cityDTO.getCountryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Country not found"));
-        
-        City city = City.builder()
-                .name(cityDTO.getName())
-                .country(country)
-                .build();
-        
-        city = cityRepository.save(city);
-        return mapCityToDTO(city);
-    }
+//    @Transactional
+//    public CityDTO createCity(CityDTO cityDTO) {
+//        Country country = countryRepository.findById(cityDTO.getCountryId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Country not found"));
+//
+//        City city = City.builder()
+//                .name(cityDTO.getName())
+//                .country(country)
+//                .build();
+//
+//        city = cityRepository.save(city);
+//        return mapCityToDTO(city);
+//    }
     
     @Transactional(readOnly = true)
     public List<CityDTO> getAllCities() {

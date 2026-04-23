@@ -18,13 +18,7 @@ public class MasterDataController {
     
     private final MasterDataService masterDataService;
     
-    // Country endpoints
-    @PostMapping("/countries")
-    public ResponseEntity<CountryDTO> createCountry(@RequestBody CountryDTO countryDTO) {
-        CountryDTO created = masterDataService.createCountry(countryDTO);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
-    }
-    
+   
     @GetMapping("/countries")
     public ResponseEntity<List<CountryDTO>> getAllCountries() {
         List<CountryDTO> countries = masterDataService.getAllCountries();
@@ -36,13 +30,8 @@ public class MasterDataController {
         CountryDTO country = masterDataService.getCountryById(id);
         return new ResponseEntity<>(country, HttpStatus.OK);
     }
-    
-    // City endpoints
-    @PostMapping("/cities")
-    public ResponseEntity<CityDTO> createCity(@RequestBody CityDTO cityDTO) {
-        CityDTO created = masterDataService.createCity(cityDTO);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
-    }
+
+
     
     @GetMapping("/cities")
     public ResponseEntity<List<CityDTO>> getAllCities() {

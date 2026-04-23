@@ -96,91 +96,80 @@ public class CustomerService {
         
         return mapToDTO(savedCustomer);
     }
-    
+
     @Transactional
     public CustomerDTO updateCustomer(Long id, CustomerDTO customerDTO) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id " + id));
-        
+
         // Check for duplicate NIC if NIC is being changed
         if (!customer.getNicNumber().equals(customerDTO.getNicNumber()) &&
                 customerRepository.existsByNicNumberAndIdNot(customerDTO.getNicNumber(), id)) {
             throw new DuplicateNICException("A customer with NIC number " + customerDTO.getNicNumber() + " already exists");
         }
-        
+
         customer.setName(customerDTO.getName());
         customer.setDateOfBirth(customerDTO.getDateOfBirth());
         customer.setNicNumber(customerDTO.getNicNumber());
-        
-        // Update mobile numbers - Fix: Copy before clearing
-        Set<MobileNumber> oldMobileNumbers = new java.util.HashSet<>(customer.getMobileNumbers());
+
+        // 1. Update Mobile Numbers (Proper Orphan Removal)
         customer.getMobileNumbers().clear();
-        mobileNumberRepository.deleteAllInBatch(oldMobileNumbers);
-        
         if (customerDTO.getMobileNumbers() != null && !customerDTO.getMobileNumbers().isEmpty()) {
-            Set<MobileNumber> mobileNumbers = customerDTO.getMobileNumbers()
+            Set<MobileNumber> newMobileNumbers = customerDTO.getMobileNumbers()
                     .stream()
                     .map(mobileDTO -> MobileNumber.builder()
                             .number(mobileDTO.getNumber())
-                            .customer(customer)
+                            .customer(customer) // Ensure bidirectional link
                             .build())
                     .collect(Collectors.toSet());
-            mobileNumberRepository.saveAll(mobileNumbers);
-            customer.setMobileNumbers(mobileNumbers);
+            customer.getMobileNumbers().addAll(newMobileNumbers);
         }
-        
-        // Update addresses - Fix: Copy before clearing
-        Set<Address> oldAddresses = new java.util.HashSet<>(customer.getAddresses());
+
+        // 2. Update Addresses (Proper Orphan Removal)
         customer.getAddresses().clear();
-        addressRepository.deleteAllInBatch(oldAddresses);
-        
         if (customerDTO.getAddresses() != null && !customerDTO.getAddresses().isEmpty()) {
-            Set<Address> addresses = customerDTO.getAddresses()
+            Set<Address> newAddresses = customerDTO.getAddresses()
                     .stream()
                     .map(addressDTO -> {
                         City city = cityRepository.findById(addressDTO.getCityId())
                                 .orElseThrow(() -> new ResourceNotFoundException("City not found"));
                         Country country = countryRepository.findById(addressDTO.getCountryId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Country not found"));
-                        
+
                         return Address.builder()
                                 .addressLine1(addressDTO.getAddressLine1())
                                 .addressLine2(addressDTO.getAddressLine2())
                                 .city(city)
                                 .country(country)
-                                .customer(customer)
+                                .customer(customer) // Ensure bidirectional link
                                 .build();
                     })
                     .collect(Collectors.toSet());
-            addressRepository.saveAll(addresses);
-            customer.setAddresses(addresses);
+            customer.getAddresses().addAll(newAddresses);
         }
-        
-        // Update family members - Fix: Copy before clearing
-        Set<FamilyMember> oldFamilyMembers = new java.util.HashSet<>(customer.getFamilyMembers());
+
+        // 3. Update Family Members (Proper Orphan Removal)
         customer.getFamilyMembers().clear();
-        familyMemberRepository.deleteAllInBatch(oldFamilyMembers);
-        
         if (customerDTO.getFamilyMembers() != null && !customerDTO.getFamilyMembers().isEmpty()) {
-            Set<FamilyMember> familyMembers = customerDTO.getFamilyMembers()
+            Set<FamilyMember> newFamilyMembers = customerDTO.getFamilyMembers()
                     .stream()
                     .map(familyDTO -> {
                         Customer familyCustomer = customerRepository.findById(familyDTO.getFamilyCustomerId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Family member customer not found"));
-                        
+
                         return FamilyMember.builder()
-                                .customer(customer)
                                 .familyCustomer(familyCustomer)
                                 .relationship(familyDTO.getRelationship())
+                                .customer(customer) // Ensure bidirectional link
                                 .build();
                     })
                     .collect(Collectors.toSet());
-            familyMemberRepository.saveAll(familyMembers);
-            customer.setFamilyMembers(familyMembers);
+            customer.getFamilyMembers().addAll(newFamilyMembers);
         }
-        
-        final Customer updatecustomer = customerRepository.save(customer);
-        return mapToDTO(updatecustomer);
+
+        // Hibernate automatically detects the changes in the collections and fires the correct DELETE/INSERT SQL
+        final Customer updatedCustomer = customerRepository.save(customer);
+        return mapToDTO(updatedCustomer);
     }
     
     @Transactional(readOnly = true)
@@ -189,12 +178,22 @@ public class CustomerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id " + id));
         return mapToDTO(customer);
     }
-    
+
     @Transactional
     public void deleteCustomer(Long id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+
+        // Manually delete reverse foreign-key relationships first!
+        familyMemberRepository.deleteByFamilyCustomerId(id);
+
         customerRepository.delete(customer);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CustomerDTO> getAllCustomers(Pageable pageable) {
+        return customerRepository.findAll(pageable)
+                .map(this::mapToDTO);
     }
     
     private CustomerDTO mapToDTO(Customer customer) {

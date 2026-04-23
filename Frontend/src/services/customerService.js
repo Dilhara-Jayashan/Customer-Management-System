@@ -1,57 +1,57 @@
 import api from './api';
 
-const CUSTOMERS_ENDPOINT = '/customers';
-
 export const customerService = {
-  // Create a new customer
-  createCustomer: (customerData) => {
-    return api.post(`${CUSTOMERS_ENDPOINT}/create`, customerData).then(res => res.data);
+  // ─── Customer CRUD ────────────────────────────────────────────
+  createCustomer: (data) =>
+    api.post('/customers/create', data).then((r) => r.data),
+
+  getCustomerById: (id) =>
+    api.get(`/customers/${id}`).then((r) => r.data),
+
+  updateCustomer: (id, data) =>
+    api.put(`/customers/${id}`, data).then((r) => r.data),
+
+  deleteCustomer: (id) =>
+    api.delete(`/customers/${id}`).then((r) => r.data),
+
+  /**
+   * getAllCustomers — the backend GET /api/customers returns a plain string
+   * message. To list all customers we rely on JpaRepository's findAll via
+   * pagination. The controller stub returns HTTP 200 with a text body, so
+   * we try to GET with page params and fall back gracefully.
+   * NOTE: Backend GET /api/customers is currently a stub. Add a proper
+   *       Page<CustomerDTO> endpoint for production use.
+   */
+  getAllCustomers: async (page = 0, size = 50) => {
+    try {
+      const res = await api.get(`/customers?page=${page}&size=${size}`);
+      if (res.data && res.data.content) return res.data; // Page<CustomerDTO>
+      if (Array.isArray(res.data)) return { content: res.data, totalElements: res.data.length, totalPages: 1 };
+      // Backend currently returns a string stub → return empty
+      return { content: [], totalElements: 0, totalPages: 0, _stub: true };
+    } catch {
+      return { content: [], totalElements: 0, totalPages: 0, _stub: true };
+    }
   },
 
-  // Get customer by ID
-  getCustomerById: (id) => {
-    return api.get(`${CUSTOMERS_ENDPOINT}/${id}`).then(res => res.data);
-  },
-
-  // Get all customers
-  getAllCustomers: () => {
-    return api.get(`${CUSTOMERS_ENDPOINT}?page=0&size=100`).then(res => {
-      // Handle paginated response
-      if (res.data && res.data.content) {
-        return res.data.content; // Extract content from Page object
-      }
-      return res.data;
-    });
-  },
-
-  // Update customer
-  updateCustomer: (id, customerData) => {
-    return api.put(`${CUSTOMERS_ENDPOINT}/${id}`, customerData).then(res => res.data);
-  },
-
-  // Delete customer
-  deleteCustomer: (id) => {
-    return api.delete(`${CUSTOMERS_ENDPOINT}/${id}`).then(res => res.data);
-  },
-
-  // Bulk upload customers from Excel
-  bulkUploadCustomers: (file) => {
+  // ─── Bulk Upload (Excel .xlsx/.xls) ───────────────────────────
+  bulkUploadCustomers: (file, onUploadProgress) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post(`${CUSTOMERS_ENDPOINT}/bulk-upload`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }).then(res => res.data);
+    return api.post('/customers/bulk/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress,
+      timeout: 600000, // 10 min for million-record files
+    }).then((r) => r.data);
   },
 
-  // Get cities (master data)
-  getCities: () => {
-    return api.get('/cities').then(res => res.data);
-  },
+  // ─── Master Data ───────────────────────────────────────────────
+  getCountries: () =>
+    api.get('/master/countries').then((r) => r.data),
 
-  // Get countries (master data)
-  getCountries: () => {
-    return api.get('/countries').then(res => res.data);
-  },
+  getCities: () =>
+    api.get('/master/cities').then((r) => r.data),
+
+  getCitiesByCountry: (countryId) =>
+    api.get(`/master/cities/country/${countryId}`).then((r) => r.data),
 };
