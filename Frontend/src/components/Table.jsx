@@ -21,7 +21,6 @@ export const Table = ({
   totalPages,
   totalElements,
   onPageChange,
-  pageSize = 10,
   emptyMessage = 'No records found',
 }) => {
   if (isLoading) {

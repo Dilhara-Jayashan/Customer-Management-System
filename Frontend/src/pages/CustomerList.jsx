@@ -64,6 +64,7 @@ export const CustomerList = () => {
     } catch { /* master data optional */ }
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: async data loaders called on mount
   useEffect(() => { load(); loadMaster(); }, [load, loadMaster]);
 
   const filtered = useMemo(() => {
@@ -285,6 +286,7 @@ const CustomerFormModal = ({ isOpen, onClose, customer, customers, countries, ci
   const [saving, setSaving]       = useState(false);
   const [citiesByCountry, setCitiesByCountry] = useState({});
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reset form when modal opens or customer prop changes
   useEffect(() => {
     if (isOpen) {
       if (customer) {
